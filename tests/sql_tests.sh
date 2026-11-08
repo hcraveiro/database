@@ -25,3 +25,7 @@ sqlite3 upgrade_test.mmb <../debug_scripts/currencies_update_patch.mmdbg
 sqlite3 upgrade_test.mmb 'pragma integrity_check;'
 cd ..
 fold test.currencies
+
+fold test.virtual_recurring "Test virtual recurring transaction schema"
+python3 tests/test_virtual_recurring_schema.py
+fold test.virtual_recurring
