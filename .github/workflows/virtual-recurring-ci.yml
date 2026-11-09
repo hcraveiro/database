@@ -37,3 +37,20 @@ jobs:
 
       - name: Run virtual recurrence migration unit tests
         run: python3 -m unittest discover -s tests -p 'test_virtual_recurring_schema.py' -v
+
+      - name: Test persistent v21-to-v22 acceptance database
+        run: python3 -m unittest discover -s tests -p 'test_virtual_recurring_acceptance.py' -v
+
+      - name: Generate synthetic v22 database for manual cross-client testing
+        run: |
+          python3 tests/build_virtual_recurring_acceptance.py acceptance/mmex-virtual-acceptance-v22.mmb
+          test "$(sqlite3 acceptance/mmex-virtual-acceptance-v22.mmb 'PRAGMA integrity_check;')" = ok
+          test "$(sqlite3 acceptance/mmex-virtual-acceptance-v22.mmb 'PRAGMA user_version;')" = 22
+
+      - name: Upload isolated acceptance database
+        uses: actions/upload-artifact@v4
+        with:
+          name: mmex-virtual-acceptance-v22
+          path: acceptance/mmex-virtual-acceptance-v22.mmb
+          if-no-files-found: error
+          retention-days: 14
