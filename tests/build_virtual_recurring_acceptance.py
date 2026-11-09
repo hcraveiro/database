@@ -28,6 +28,11 @@ def create_schema(database, version=22):
     else:
         raise ValueError("Only synthetic schema versions 21 and 22 are supported")
     database.execute(f"PRAGMA user_version={version}")
+    # Desktop also reads its own schema version from INFOTABLE_V1.
+    database.execute(
+        "UPDATE INFOTABLE_V1 SET INFOVALUE=? WHERE INFONAME='DATAVERSION'",
+        (str(version),),
+    )
 
 
 def seed_accounts_and_ledger(database):
