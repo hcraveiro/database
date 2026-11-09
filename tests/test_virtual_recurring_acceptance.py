@@ -60,6 +60,21 @@ class AcceptanceDatabaseTest(unittest.TestCase):
                 "SELECT COUNT(*) FROM CHECKINGACCOUNT_V1"
             ).fetchone(), (5,))
             self.assertEqual(database.execute(
+                "SELECT COUNT(DISTINCT CATEGID), COUNT(DISTINCT PAYEEID) "
+                "FROM BILLSDEPOSITS_V1"
+            ).fetchone(), (7, 7))
+            self.assertEqual(database.execute(
+                "SELECT c.CATEGNAME, p.PAYEENAME "
+                "FROM BILLSDEPOSITS_V1 b "
+                "JOIN CATEGORY_V1 c ON c.CATEGID=b.CATEGID "
+                "JOIN PAYEE_V1 p ON p.PAYEEID=b.PAYEEID "
+                "WHERE b.BDID=921"
+            ).fetchone(), (
+                "V02 Yearly EUR120 - Monthly",
+                "V02 Yearly EUR120 - Monthly",
+            ))
+
+            self.assertEqual(database.execute(
                 "SELECT COUNT(*) FROM BILLSDEPOSITS_V1 "
                 "WHERE TRANSCODE='Transfer' AND ISVIRTUAL=1"
             ).fetchone(), (0,))
