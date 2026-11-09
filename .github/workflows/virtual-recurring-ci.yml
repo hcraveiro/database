@@ -41,16 +41,24 @@ jobs:
       - name: Test persistent v21-to-v22 acceptance database
         run: python3 -m unittest discover -s tests -p 'test_virtual_recurring_acceptance.py' -v
 
-      - name: Generate synthetic v22 database for manual cross-client testing
+      - name: Generate isolated v21 and v22 acceptance databases
         run: |
+          python3 tests/build_virtual_recurring_acceptance.py acceptance/mmex-virtual-acceptance-v21.mmb --version 21
           python3 tests/build_virtual_recurring_acceptance.py acceptance/mmex-virtual-acceptance-v22.mmb
-          test "$(sqlite3 acceptance/mmex-virtual-acceptance-v22.mmb 'PRAGMA integrity_check;')" = ok
-          test "$(sqlite3 acceptance/mmex-virtual-acceptance-v22.mmb 'PRAGMA user_version;')" = 22
+          for version in 21 22; do
+            db="acceptance/mmex-virtual-acceptance-v${version}.mmb"
+            test "$(sqlite3 "$db" 'PRAGMA integrity_check;')" = ok
+            test "$(sqlite3 "$db" 'PRAGMA user_version;')" = "$version"
+          done
 
-      - name: Upload isolated acceptance database
+      - name: Upload isolated acceptance databases and checklist
         uses: actions/upload-artifact@v4
         with:
-          name: mmex-virtual-acceptance-v22
-          path: acceptance/mmex-virtual-acceptance-v22.mmb
+          name: mmex-virtual-acceptance-databases
+          path: |
+            acceptance/mmex-virtual-acceptance-v21.mmb
+            acceptance/mmex-virtual-acceptance-v22.mmb
+            tests/VIRTUAL_RECURRING_ACCEPTANCE.md
+            tests/virtual_recurring_acceptance.csv
           if-no-files-found: error
           retention-days: 14
