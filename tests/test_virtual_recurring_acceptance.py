@@ -49,6 +49,9 @@ class AcceptanceDatabaseTest(unittest.TestCase):
         path = build_database(self.folder / "synthetic_v22.mmb")
         with sqlite3.connect(path) as database:
             self.assertEqual(database.execute("PRAGMA user_version").fetchone(), (22,))
+            self.assertEqual(database.execute(
+                "SELECT INFOVALUE FROM INFOTABLE_V1 WHERE INFONAME='DATAVERSION'"
+            ).fetchone(), ("22",))
             self.assertEqual(database.execute("PRAGMA integrity_check").fetchone(), ("ok",))
             self.assertEqual(database.execute(
                 "SELECT COUNT(*) FROM BILLSDEPOSITS_V1 WHERE ISVIRTUAL=1"
@@ -72,6 +75,9 @@ class AcceptanceDatabaseTest(unittest.TestCase):
         with sqlite3.connect(source) as original:
             old = snapshot(original)
             self.assertEqual(original.execute("PRAGMA user_version").fetchone(), (21,))
+            self.assertEqual(original.execute(
+                "SELECT INFOVALUE FROM INFOTABLE_V1 WHERE INFONAME='DATAVERSION'"
+            ).fetchone(), ("21",))
             with sqlite3.connect(destination) as copy:
                 original.backup(copy)
 
@@ -79,6 +85,10 @@ class AcceptanceDatabaseTest(unittest.TestCase):
             self.assertEqual(database.execute("PRAGMA user_version").fetchone(), (21,))
             database.executescript(MIGRATION)
             database.execute("PRAGMA user_version=22")
+            database.execute(
+                "UPDATE INFOTABLE_V1 SET INFOVALUE='22' "
+                "WHERE INFONAME='DATAVERSION'"
+            )
             self.assertEqual(snapshot(database), old)
             self.assertEqual(database.execute("PRAGMA integrity_check").fetchone(), ("ok",))
             self.assertEqual(database.execute(
@@ -120,6 +130,9 @@ class AcceptanceDatabaseTest(unittest.TestCase):
         # Check again after the upgraded database is closed and reopened.
         with sqlite3.connect(destination) as upgraded:
             self.assertEqual(upgraded.execute("PRAGMA user_version").fetchone(), (22,))
+            self.assertEqual(upgraded.execute(
+                "SELECT INFOVALUE FROM INFOTABLE_V1 WHERE INFONAME='DATAVERSION'"
+            ).fetchone(), ("22",))
             self.assertEqual(upgraded.execute("PRAGMA integrity_check").fetchone(), ("ok",))
             self.assertEqual(upgraded.execute(
                 "SELECT * FROM CHECKINGACCOUNT_V1 ORDER BY TRANSID"
