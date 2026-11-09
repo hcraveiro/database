@@ -14,6 +14,19 @@ sqlite3 test.mmb 'pragma integrity_check;'
 fold test.upgrade "Test db upgrade"
 cd incremental_upgrade
 cp ../tests/mmex_0970.mmb upgrade_test.mmb
+# The 0.9.7 test fixture has no report table, but migration v15 expects
+# a pre-existing REPORT_V1. Supply the historical columns for this fixture.
+sqlite3 upgrade_test.mmb <<'SQL'
+CREATE TABLE IF NOT EXISTS REPORT_V1 (
+  REPORTID INTEGER PRIMARY KEY,
+  REPORTNAME TEXT COLLATE NOCASE NOT NULL UNIQUE,
+  GROUPNAME TEXT COLLATE NOCASE,
+  SQLCONTENT TEXT,
+  LUACONTENT TEXT,
+  TEMPLATECONTENT TEXT,
+  DESCRIPTION TEXT
+);
+SQL
 for sql in `ls database_version_*.sql | sort -n -t_ -k3`; do
   echo - $sql
   sqlite3 upgrade_test.mmb <$sql
