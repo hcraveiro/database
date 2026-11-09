@@ -1,0 +1,39 @@
+name: Virtual Recurring - Database CI
+
+on:
+  push:
+    branches:
+      - feature/virtual-recurring-transactions
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: virtual-database-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  schema-and-migrations:
+    name: SQLite schema and migration tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install SQLite CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y sqlite3
+
+      - name: Run schema and incremental migration tests
+        run: bash tests/sql_tests.sh
+
+      - name: Run virtual recurrence migration unit tests
+        run: python3 -m unittest discover -s tests -p 'test_virtual_recurring_schema.py' -v
