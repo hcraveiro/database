@@ -60,11 +60,11 @@ def seed_accounts_and_ledger(database):
         "VALUES ('BASECURRENCYID', '2')"
     )
     posted = [
-        (910, 901, None, 901, "Withdrawal", 50, "R", "2026-11-01", None),
-        (911, 901, None, 902, "Deposit", 125, "R", "2026-12-01", None),
-        (912, 901, 902, 901, "Transfer", 20, "R", "2026-12-05", 22),
-        (913, 902, None, 902, "Deposit", 40, "R", "2026-11-02", None),
-        (914, 903, None, 901, "Withdrawal", 10, "R", "2026-11-04", None),
+        (910, 901, None, 901, "Withdrawal", 50, "R", "2026-11-01T00:00:00", None),
+        (911, 901, None, 902, "Deposit", 125, "R", "2026-12-01T00:00:00", None),
+        (912, 901, 902, 901, "Transfer", 20, "R", "2026-12-05T00:00:00", 22),
+        (913, 902, None, 902, "Deposit", 40, "R", "2026-11-02T00:00:00", None),
+        (914, 903, None, 901, "Withdrawal", 10, "R", "2026-11-04T00:00:00", None),
     ]
     database.executemany(
         "INSERT INTO CHECKINGACCOUNT_V1 "
@@ -96,12 +96,13 @@ def seed_schedules(database, version=22):
          repeats, next_due, payments_left, frequency, activated) in scheduled:
         fields = (
             "BDID, ACCOUNTID, TOACCOUNTID, PAYEEID, TRANSCODE, TRANSAMOUNT, "
-            "STATUS, CATEGID, REPEATS, NEXTOCCURRENCEDATE, NUMOCCURRENCES"
+            "STATUS, CATEGID, TRANSDATE, REPEATS, NEXTOCCURRENCEDATE, "
+            "NUMOCCURRENCES"
         )
         values = [
             schedule_id, account_id, destination_id, payee_id, kind,
             amount, "", 51 if kind == "Deposit" else 1,
-            repeats, next_due, payments_left,
+            next_due + "T00:00:00", repeats, next_due, payments_left,
         ]
         if version == 22:
             fields += ", ISVIRTUAL, VIRTUALFREQUENCY, VIRTUALSTARTDATE"
