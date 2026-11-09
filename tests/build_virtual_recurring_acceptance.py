@@ -76,6 +76,28 @@ def seed_accounts_and_ledger(database):
 
 
 def seed_schedules(database, version=22):
+    # Every schedule gets a unique category and payee so the Cash Flow table
+    # can be audited without guessing which nominal recurrence generated it.
+    labels = {
+        920: "V01 Monthly EUR30 - Weekly",
+        921: "V02 Yearly EUR120 - Monthly",
+        922: "V03 Quarterly EUR91 - Monthly",
+        923: "V04 USD31 Last Business - Daily",
+        924: "V05 Real Transfer EUR20",
+        925: "V06 Closed Account EUR15 - Weekly",
+        926: "V07 Expired EUR12 - Daily",
+    }
+    database.executemany(
+        "INSERT INTO CATEGORY_V1 (CATEGID, CATEGNAME, ACTIVE, PARENTID) "
+        "VALUES (?, ?, 1, -1)",
+        [(schedule_id, name) for schedule_id, name in labels.items()],
+    )
+    database.executemany(
+        "INSERT INTO PAYEE_V1 (PAYEEID, PAYEENAME, CATEGID, ACTIVE) "
+        "VALUES (?, ?, ?, 1)",
+        [(schedule_id, name, schedule_id)
+         for schedule_id, name in labels.items()],
+    )
     scheduled = [
         (920, 901, None, 901, "Withdrawal", 30, 3, "2026-11-30", 5,
          "Weekly", "2026-11-20"),
@@ -100,8 +122,8 @@ def seed_schedules(database, version=22):
             "NUMOCCURRENCES"
         )
         values = [
-            schedule_id, account_id, destination_id, payee_id, kind,
-            amount, "", 51 if kind == "Deposit" else 1,
+            schedule_id, account_id, destination_id, schedule_id, kind,
+            amount, "", schedule_id,
             next_due + "T00:00:00", repeats, next_due, payments_left,
         ]
         if version == 22:
